@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 import { useI18n } from '../i18n-provider';
 import LanguageSwitcher from '../language-switcher';
+import { processImage } from '../../lib/image';
 import { categoriesFor, CURRENCIES, DEFAULT_CURRENCY, OTHER } from '../../lib/i18n';
 
 export default function AddReceiptPage() {
@@ -15,8 +16,8 @@ export default function AddReceiptPage() {
 
   const categories = categoriesFor(lang);
 
-  const [preview, setPreview] = useState('');   // data URL для показа + распознавания
-  const [blob, setBlob] = useState(null);       // сжатый jpeg для Storage
+  const [preview, setPreview] = useState('');
+  const [blob, setBlob] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -30,70 +31,10 @@ export default function AddReceiptPage() {
     note: '',
   });
 
-  // При смене языка держим категорию валидной
   useEffect(() => {
     setForm((f) => (categories.includes(f.category) ? f : { ...f, category: OTHER[lang] }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
-
-  // Надёжное декодирование + сжатие изображения (работает и на iOS Safari).
-  async function processImage(file) {
-    const max = 1600;
-
-    // 1) Пытаемся через createImageBitmap с учётом ориентации (надёжнее для фото с телефона)
-    let source = null;
-    let sw = 0;
-    let sh = 0;
-    try {
-      source = await createImageBitmap(file, { imageOrientation: 'from-image' });
-      sw = source.width;
-      sh = source.height;
-    } catch {
-      // 2) Фолбэк через <img>
-      source = await loadImg(file);
-      sw = source.naturalWidth;
-      sh = source.naturalHeight;
-    }
-
-    if (!sw || !sh) throw new Error('decode failed');
-
-    let width = sw;
-    let height = sh;
-    if (width > max || height > max) {
-      const k = Math.min(max / width, max / height);
-      width = Math.round(width * k);
-      height = Math.round(height * k);
-    }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(source, 0, 0, width, height);
-    if (source.close) source.close();
-
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
-    const outBlob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.82));
-    return { dataUrl, outBlob };
-  }
-
-  function loadImg(file) {
-    return new Promise((resolve, reject) => {
-      const img = document.createElement('img');
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        resolve(img);
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('img load failed'));
-      };
-      img.src = url;
-    });
-  }
 
   async function onFile(e) {
     const file = e.target.files?.[0];
@@ -101,7 +42,7 @@ export default function AddReceiptPage() {
     setError('');
     setProcessing(true);
     try {
-      const { dataUrl, outBlob } = await processImage(file);
+      const { dataUrl, blob: outBlob } = await processImage(file);
       setPreview(dataUrl);
       setBlob(outBlob);
       setProcessing(false);
@@ -125,10 +66,7 @@ export default function AddReceiptPage() {
       if (!res.ok) throw new Error(json.error || 'error');
       const d = json.data || {};
 
-      // Если ничего не распозналось — честно сообщаем
-      if (d.amount == null && !d.date) {
-        setError(t('notRecognized'));
-      }
+      if (d.amount == null && !d.date) setError(t('notRecognized'));
 
       setForm((f) => ({
         ...f,
@@ -243,17 +181,16 @@ export default function AddReceiptPage() {
         </div>
 
         <form className="card" onSubmit={save}>
-          <div className="row">
+          <label>{t('dateLabel')}</label>
+          <input type="date" value={form.purchased_at} onChange={(e) => set('purchased_at', e.target.value)} required />
+
+          <div className="form-row" style={{ marginTop: 10 }}>
             <div>
-              <label>{t('dateLabel')}</label>
-              <input type="date" value={form.purchased_at} onChange={(e) => set('purchased_at', e.target.value)} required />
-            </div>
-            <div>
-              <label>{t('amountLabel')}</label>
+              <label style={{ marginTop: 0 }}>{t('amountLabel')}</label>
               <input type="number" step="0.01" min="0" value={form.amount} onChange={(e) => set('amount', e.target.value)} required />
             </div>
             <div style={{ maxWidth: 120 }}>
-              <label>{t('currencyLabel')}</label>
+              <label style={{ marginTop: 0 }}>{t('currencyLabel')}</label>
               <select value={form.currency} onChange={(e) => set('currency', e.target.value)}>
                 {CURRENCIES.map((c) => (
                   <option key={c} value={c}>{c}</option>

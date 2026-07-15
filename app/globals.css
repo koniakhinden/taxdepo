@@ -62,6 +62,10 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); b
 .row { display: flex; gap: 10px; flex-wrap: wrap; }
 .row > * { flex: 1; min-width: 140px; }
 
+/* Форма: поля могут ужиматься и не налезают друг на друга на узких экранах */
+.form-row { display: flex; gap: 10px; }
+.form-row > * { flex: 1; min-width: 0; }
+
 .muted { color: var(--muted); font-size: 13px; }
 .error { color: var(--danger); font-size: 14px; margin-top: 8px; }
 .success { color: #059669; font-size: 14px; margin-top: 8px; }
@@ -71,11 +75,16 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); b
   padding: 12px; border: 1px solid var(--border); border-radius: 10px;
   background: #fff; margin-bottom: 8px;
 }
+.receipt .open {
+  display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;
+  text-decoration: none; color: inherit; cursor: pointer;
+}
 .receipt .thumb {
   width: 52px; height: 52px; border-radius: 8px; object-fit: cover;
   background: #eef0f3; flex-shrink: 0;
 }
 .receipt .info { flex: 1; min-width: 0; }
+.preview-full { width: 100%; border-radius: 10px; display: block; }
 .receipt .info .top { display: flex; justify-content: space-between; gap: 10px; }
 .receipt .cat { font-weight: 600; font-size: 15px; }
 .receipt .amt { font-weight: 700; font-size: 15px; white-space: nowrap; }

@@ -40,24 +40,26 @@ export default function ReceiptList({ initial }) {
     <div>
       {items.map((r) => (
         <div className="receipt" key={r.id}>
-          {r.thumb ? (
-            <img src={r.thumb} alt="" className="thumb" />
-          ) : (
-            <div className="thumb" />
-          )}
-          <div className="info">
-            <div className="top">
-              <span className="cat">{r.category}</span>
-              <span className="amt">
-                {Number(r.amount).toFixed(2)} {r.currency}
-              </span>
+          <a href={`/receipt/${r.id}`} className="open">
+            {r.thumb ? (
+              <img src={r.thumb} alt="" className="thumb" />
+            ) : (
+              <div className="thumb" />
+            )}
+            <div className="info">
+              <div className="top">
+                <span className="cat">{r.category}</span>
+                <span className="amt">
+                  {Number(r.amount).toFixed(2)} {r.currency}
+                </span>
+              </div>
+              <div className="sub">
+                {formatDate(r.purchased_at)}
+                {r.merchant ? ` · ${r.merchant}` : ''}
+                {r.note ? ` · ${r.note}` : ''}
+              </div>
             </div>
-            <div className="sub">
-              {formatDate(r.purchased_at)}
-              {r.merchant ? ` · ${r.merchant}` : ''}
-              {r.note ? ` · ${r.note}` : ''}
-            </div>
-          </div>
+          </a>
           <button
             className="btn danger"
             onClick={() => remove(r)}
