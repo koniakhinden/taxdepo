@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
+import { useI18n } from '../i18n-provider';
+import LanguageSwitcher from '../language-switcher';
 
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useI18n();
 
   const [mode, setMode] = useState('signin'); // signin | signup
   const [email, setEmail] = useState('');
@@ -25,7 +28,7 @@ export default function LoginPage() {
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        setInfo('Аккаунт создан. Если включено подтверждение по email — проверь почту, иначе входи.');
+        setInfo(t('signupInfo'));
         setMode('signin');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -34,7 +37,7 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (err) {
-      setError(translate(err.message));
+      setError(translate(err.message, t));
     } finally {
       setLoading(false);
     }
@@ -42,23 +45,26 @@ export default function LoginPage() {
 
   return (
     <div className="auth-wrap">
-      <h1>Учёт чеков</h1>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+        <LanguageSwitcher />
+      </div>
+      <h1>{t('appTitle')}</h1>
       <p className="muted" style={{ textAlign: 'center', marginTop: 0 }}>
-        Фото чека → сумма, дата, категория → выгрузка для бухгалтера
+        {t('tagline')}
       </p>
 
       <div className="card">
         <div className="tab-row">
           <button className={mode === 'signin' ? 'active' : ''} onClick={() => setMode('signin')}>
-            Вход
+            {t('signIn')}
           </button>
           <button className={mode === 'signup' ? 'active' : ''} onClick={() => setMode('signup')}>
-            Регистрация
+            {t('signUp')}
           </button>
         </div>
 
         <form onSubmit={submit}>
-          <label>Email</label>
+          <label>{t('emailLabel')}</label>
           <input
             type="email"
             value={email}
@@ -66,7 +72,7 @@ export default function LoginPage() {
             required
             autoComplete="email"
           />
-          <label>Пароль</label>
+          <label>{t('passwordLabel')}</label>
           <input
             type="password"
             value={password}
@@ -77,7 +83,7 @@ export default function LoginPage() {
           />
 
           <button className="btn block" style={{ marginTop: 16 }} disabled={loading}>
-            {loading ? <span className="spinner" /> : mode === 'signin' ? 'Войти' : 'Создать аккаунт'}
+            {loading ? <span className="spinner" /> : mode === 'signin' ? t('signInBtn') : t('signUpBtn')}
           </button>
         </form>
 
@@ -88,9 +94,9 @@ export default function LoginPage() {
   );
 }
 
-function translate(msg = '') {
-  if (msg.includes('Invalid login')) return 'Неверный email или пароль.';
-  if (msg.includes('already registered')) return 'Такой email уже зарегистрирован.';
-  if (msg.includes('at least 6')) return 'Пароль должен быть не короче 6 символов.';
+function translate(msg = '', t) {
+  if (msg.includes('Invalid login')) return t('errInvalidLogin');
+  if (msg.includes('already registered')) return t('errAlreadyReg');
+  if (msg.includes('at least 6')) return t('errShortPass');
   return msg;
 }

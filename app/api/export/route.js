@@ -1,19 +1,24 @@
 import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
 import { createClient } from '../../../lib/supabase/server';
+import { exportStringsFor } from '../../../lib/i18n';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 // Собирает zip: receipts.xlsx + папка photos/ со всеми фото чеков.
-export async function GET() {
+export async function GET(request) {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return new Response('Не авторизован', { status: 401 });
+    return new Response('Unauthorized', { status: 401 });
   }
+
+  const url = new URL(request.url);
+  const lang = url.searchParams.get('lang') === 'en' ? 'en' : 'uk';
+  const S = exportStringsFor(lang);
 
   const { data: receipts, error } = await supabase
     .from('receipts')
@@ -21,26 +26,25 @@ export async function GET() {
     .order('purchased_at', { ascending: true });
 
   if (error) {
-    return new Response('Ошибка чтения данных', { status: 500 });
+    return new Response('Error reading data', { status: 500 });
   }
 
   const zip = new JSZip();
   const photosFolder = zip.folder('photos');
 
-  // ---- Excel ----
   const wb = new ExcelJS.Workbook();
   wb.creator = 'Receipt Tracker';
-  const ws = wb.addWorksheet('Чеки');
+  const ws = wb.addWorksheet(S.sheet);
 
   ws.columns = [
-    { header: '№', key: 'n', width: 6 },
-    { header: 'Дата', key: 'date', width: 14 },
-    { header: 'Категория', key: 'category', width: 28 },
-    { header: 'Магазин', key: 'merchant', width: 24 },
-    { header: 'Сумма', key: 'amount', width: 14 },
-    { header: 'Валюта', key: 'currency', width: 10 },
-    { header: 'Заметка', key: 'note', width: 26 },
-    { header: 'Файл фото', key: 'photo', width: 28 },
+    { header: S.n, key: 'n', width: 6 },
+    { header: S.date, key: 'date', width: 14 },
+    { header: S.category, key: 'category', width: 28 },
+    { header: S.merchant, key: 'merchant', width: 24 },
+    { header: S.amount, key: 'amount', width: 14 },
+    { header: S.currency, key: 'currency', width: 10 },
+    { header: S.note, key: 'note', width: 26 },
+    { header: S.photo, key: 'photo', width: 28 },
   ];
   ws.getRow(1).font = { bold: true };
   ws.getRow(1).fill = {
@@ -57,7 +61,6 @@ export async function GET() {
     let photoName = '';
 
     if (r.image_path) {
-      // Скачиваем фото из Storage и кладём в архив
       const { data: file } = await supabase.storage.from('receipts').download(r.image_path);
       if (file) {
         const buf = Buffer.from(await file.arrayBuffer());
@@ -79,12 +82,10 @@ export async function GET() {
     });
   }
 
-  // Формат суммы
   ws.getColumn('amount').numFmt = '#,##0.00';
 
-  // Итоговая строка
   if (list.length) {
-    const totalRow = ws.addRow({ category: 'ИТОГО', amount: { formula: `SUM(E2:E${list.length + 1})` } });
+    const totalRow = ws.addRow({ category: S.total, amount: { formula: `SUM(E2:E${list.length + 1})` } });
     totalRow.font = { bold: true };
   }
 

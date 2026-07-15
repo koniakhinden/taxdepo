@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import { createClient } from '../lib/supabase/client';
+import { useI18n } from './i18n-provider';
 
 export default function ReceiptList({ initial }) {
   const supabase = createClient();
+  const { t } = useI18n();
   const [items, setItems] = useState(initial);
   const [busyId, setBusyId] = useState(null);
 
   async function remove(r) {
-    if (!confirm('Удалить этот чек?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
     setBusyId(r.id);
     try {
       if (r.image_path) {
@@ -19,7 +21,7 @@ export default function ReceiptList({ initial }) {
       if (error) throw error;
       setItems((list) => list.filter((x) => x.id !== r.id));
     } catch (err) {
-      alert('Не удалось удалить: ' + err.message);
+      alert(t('deleteFail') + err.message);
     } finally {
       setBusyId(null);
     }
@@ -28,8 +30,8 @@ export default function ReceiptList({ initial }) {
   if (!items.length) {
     return (
       <div className="card empty">
-        Пока нет чеков.<br />
-        Нажми «Добавить чек» и сфотографируй первый.
+        {t('emptyLine1')}<br />
+        {t('emptyLine2')}
       </div>
     );
   }
@@ -60,7 +62,7 @@ export default function ReceiptList({ initial }) {
             className="btn danger"
             onClick={() => remove(r)}
             disabled={busyId === r.id}
-            title="Удалить"
+            title="✕"
           >
             {busyId === r.id ? '…' : '✕'}
           </button>

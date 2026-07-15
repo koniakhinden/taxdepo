@@ -1,8 +1,9 @@
 import './globals.css';
+import { I18nProvider } from './i18n-provider';
 
 export const metadata = {
-  title: 'Учёт чеков',
-  description: 'Фото чека → распознавание → база → выгрузка для бухгалтера',
+  title: 'Облік чеків / Receipt Tracker',
+  description: 'Фото чека → розпізнавання → база → вивантаження для бухгалтера',
 };
 
 export const viewport = {
@@ -13,8 +14,10 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ru">
-      <body>{children}</body>
+    <html lang="uk">
+      <body>
+        <I18nProvider>{children}</I18nProvider>
+      </body>
     </html>
   );
 }
