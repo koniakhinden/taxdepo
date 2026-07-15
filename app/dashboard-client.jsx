@@ -57,7 +57,6 @@ export default function DashboardClient({ email, receipts }) {
   const filledCount = yearRows.filter(isComplete).length;
   const filledPct = yearRows.length ? Math.round((filledCount / yearRows.length) * 100) : 0;
   const noCatCount = yearRows.filter((r) => !r.category || OTHERS.includes(r.category)).length;
-  const noDescCount = yearRows.filter((r) => !r.note).length;
   const otherCurs = [...new Set(yearRows.filter((r) => r.currency !== primaryCur).map((r) => r.currency))];
 
   // ----- график по месяцам (выбранный год) -----
@@ -210,7 +209,6 @@ export default function DashboardClient({ email, receipts }) {
               ) : (
                 <>
                   {noCatCount > 0 && <div className="hint"><span className="dot" />{t('hintNoCategory').replace('{n}', noCatCount)}</div>}
-                  {noDescCount > 0 && <div className="hint"><span className="dot" />{t('hintNoDesc').replace('{n}', noDescCount)}</div>}
                 </>
               )}
             </div>
@@ -249,11 +247,6 @@ export default function DashboardClient({ email, receipts }) {
                 <div><div className="muted">{t('accFilled')}</div><b>{filledCount}</b></div>
                 <div><div className="muted">{t('accNeedCheck')}</div><b>{yearRows.length - filledCount}</b></div>
               </div>
-              {noDescCount > 0 && (
-                <div className="quality check" style={{ marginTop: 0, marginBottom: 12 }}>
-                  ⚠ {t('exportWarn').replace('{n}', noDescCount)}
-                </div>
-              )}
               <a href={`/api/export?lang=${lang}${year !== 'all' ? `&year=${year}` : ''}`} className="btn green block">
                 {t('exportExcel')}
               </a>
