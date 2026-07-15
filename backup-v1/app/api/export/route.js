@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
 import { createClient } from '../../../lib/supabase/server';
-import { exportStringsFor, deductibleShare } from '../../../lib/i18n';
+import { exportStringsFor } from '../../../lib/i18n';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -18,19 +18,16 @@ export async function GET(request) {
 
   const url = new URL(request.url);
   const lang = url.searchParams.get('lang') === 'en' ? 'en' : 'uk';
-  const year = url.searchParams.get('year');
   const S = exportStringsFor(lang);
-  const usageLabel = (u) =>
-    u === 'personal' ? S.usagePersonal : u === 'partial' ? S.usagePartial : S.usageWork;
 
-  let query = supabase.from('receipts').select('*').order('purchased_at', { ascending: true });
-  const { data: receipts, error } = await query;
+  const { data: receipts, error } = await supabase
+    .from('receipts')
+    .select('*')
+    .order('purchased_at', { ascending: true });
+
   if (error) {
     return new Response('Error reading data', { status: 500 });
   }
-
-  let list = receipts || [];
-  if (year) list = list.filter((r) => (r.purchased_at || '').startsWith(year));
 
   const zip = new JSZip();
   const photosFolder = zip.folder('photos');
@@ -41,23 +38,28 @@ export async function GET(request) {
 
   ws.columns = [
     { header: S.n, key: 'n', width: 6 },
-    { header: S.date, key: 'date', width: 13 },
-    { header: S.category, key: 'category', width: 26 },
-    { header: S.merchant, key: 'merchant', width: 22 },
-    { header: S.amount, key: 'amount', width: 12 },
-    { header: S.currency, key: 'currency', width: 9 },
-    { header: S.usage, key: 'usage', width: 18 },
-    { header: S.deductible, key: 'deductible', width: 13 },
-    { header: S.note, key: 'note', width: 24 },
-    { header: S.photo, key: 'photo', width: 26 },
+    { header: S.date, key: 'date', width: 14 },
+    { header: S.category, key: 'category', width: 28 },
+    { header: S.merchant, key: 'merchant', width: 24 },
+    { header: S.amount, key: 'amount', width: 14 },
+    { header: S.currency, key: 'currency', width: 10 },
+    { header: S.note, key: 'note', width: 26 },
+    { header: S.photo, key: 'photo', width: 28 },
   ];
   ws.getRow(1).font = { bold: true };
-  ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9EEF6' } };
+  ws.getRow(1).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFE9EEF6' },
+  };
 
+  const list = receipts || [];
   let idx = 0;
+
   for (const r of list) {
     idx += 1;
     let photoName = '';
+
     if (r.image_path) {
       const { data: file } = await supabase.storage.from('receipts').download(r.image_path);
       if (file) {
@@ -68,8 +70,6 @@ export async function GET(request) {
       }
     }
 
-    const deductible = Number(r.amount) * deductibleShare(r.usage_type, r.business_percent);
-
     ws.addRow({
       n: idx,
       date: r.purchased_at,
@@ -77,22 +77,15 @@ export async function GET(request) {
       merchant: r.merchant || '',
       amount: Number(r.amount),
       currency: r.currency,
-      usage: usageLabel(r.usage_type) + (r.usage_type === 'partial' ? ` (${r.business_percent}%)` : ''),
-      deductible: deductible,
       note: r.note || '',
       photo: photoName ? `photos/${photoName}` : '',
     });
   }
 
   ws.getColumn('amount').numFmt = '#,##0.00';
-  ws.getColumn('deductible').numFmt = '#,##0.00';
 
   if (list.length) {
-    const totalRow = ws.addRow({
-      category: S.total,
-      amount: { formula: `SUM(E2:E${list.length + 1})` },
-      deductible: { formula: `SUM(H2:H${list.length + 1})` },
-    });
+    const totalRow = ws.addRow({ category: S.total, amount: { formula: `SUM(E2:E${list.length + 1})` } });
     totalRow.font = { bold: true };
   }
 
@@ -100,7 +93,7 @@ export async function GET(request) {
   zip.file('receipts.xlsx', xlsxBuffer);
 
   const zipContent = await zip.generateAsync({ type: 'nodebuffer' });
-  const stamp = year || new Date().toISOString().slice(0, 10);
+  const stamp = new Date().toISOString().slice(0, 10);
 
   return new Response(zipContent, {
     status: 200,

@@ -1,8 +1,5 @@
 import './globals.css';
-import { Inter } from 'next/font/google';
 import { I18nProvider } from './i18n-provider';
-
-const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
 
 export const metadata = {
   title: 'Облік чеків / Receipt Tracker',
@@ -17,7 +14,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="uk" className={inter.className}>
+    <html lang="uk">
       <body>
         <I18nProvider>{children}</I18nProvider>
       </body>

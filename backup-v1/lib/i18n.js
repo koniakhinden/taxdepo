@@ -98,50 +98,6 @@ export const STRINGS = {
     errAlreadyReg: "Такий email уже зареєстровано.",
     errShortPass: "Пароль має бути не коротшим за 6 символів.",
     processingPhoto: "Готую фото…",
-    metricSpending: "Витрати",
-    metricReceipts: "Чеків",
-    metricDeductible: "До вирахування (оцінка)",
-    metricFilled: "Заповнено",
-    readinessTitle: "Готовність до податкової декларації",
-    hintNoCategory: "У {n} чеків не вказано категорію",
-    hintNoDesc: "У {n} чеків немає опису витрати",
-    hintNoMerchant: "У {n} чеків не вказано продавця",
-    allGood: "Усі чеки заповнено — можна передавати бухгалтеру",
-    byCategory: "Розподіл за категоріями",
-    byMonth: "Витрати за місяцями",
-    allReceipts: "Усі чеки",
-    searchPlaceholder: "Пошук за магазином…",
-    filterYear: "Рік",
-    allYears: "Усі роки",
-    filterCategoryAll: "Усі категорії",
-    filterCurrencyAll: "Усі валюти",
-    sortLabel: "Сортування",
-    sortNew: "Спершу нові",
-    sortOld: "Спершу старі",
-    sortAmtDesc: "Сума ↓",
-    sortAmtAsc: "Сума ↑",
-    monthTotal: "Разом",
-    stComplete: "Заповнено",
-    stCheck: "Перевірити",
-    stNoCat: "Немає категорії",
-    stDup: "Можливий дублікат",
-    forAccountant: "Для бухгалтера",
-    accFilled: "Повністю заповнено",
-    accNeedCheck: "Потребують перевірки",
-    exportExcel: "Завантажити Excel + фото",
-    exportWarn: "У {n} чеків відсутній опис витрати. Рекомендуємо перевірити перед експортом.",
-    usageTypeLabel: "Тип витрати",
-    usageWork: "Робоча",
-    usagePersonal: "Особиста",
-    usagePartial: "Частково робоча",
-    businessPercentLabel: "Відсоток робочого використання",
-    qualityGood: "Дані розпізнано впевнено",
-    qualityCheck: "Перевірте розпізнані дані",
-    qualityBad: "Не вдалося розпізнати — заповніть вручну",
-    openPhoto: "Відкрити фото на весь екран",
-    nothingFound: "За фільтром нічого не знайдено.",
-    menuMore: "Ще",
-    receiptsWord: "чеків",
   },
   en: {
     appTitle: "Receipt Tracker",
@@ -188,67 +144,8 @@ export const STRINGS = {
     errAlreadyReg: "This email is already registered.",
     errShortPass: "Password must be at least 6 characters.",
     processingPhoto: "Preparing photo…",
-    metricSpending: "Spending",
-    metricReceipts: "Receipts",
-    metricDeductible: "Deductible (est.)",
-    metricFilled: "Filled",
-    readinessTitle: "Tax-return readiness",
-    hintNoCategory: "{n} receipts have no category",
-    hintNoDesc: "{n} receipts have no description",
-    hintNoMerchant: "{n} receipts have no merchant",
-    allGood: "All receipts are complete — ready for your accountant",
-    byCategory: "By category",
-    byMonth: "Spending by month",
-    allReceipts: "All receipts",
-    searchPlaceholder: "Search by merchant…",
-    filterYear: "Year",
-    allYears: "All years",
-    filterCategoryAll: "All categories",
-    filterCurrencyAll: "All currencies",
-    sortLabel: "Sort",
-    sortNew: "Newest first",
-    sortOld: "Oldest first",
-    sortAmtDesc: "Amount ↓",
-    sortAmtAsc: "Amount ↑",
-    monthTotal: "Total",
-    stComplete: "Complete",
-    stCheck: "Needs check",
-    stNoCat: "No category",
-    stDup: "Possible duplicate",
-    forAccountant: "For accountant",
-    accFilled: "Fully filled",
-    accNeedCheck: "Need a check",
-    exportExcel: "Download Excel + photos",
-    exportWarn: "{n} receipts have no description. We recommend reviewing them before export.",
-    usageTypeLabel: "Expense type",
-    usageWork: "Business",
-    usagePersonal: "Personal",
-    usagePartial: "Partly business",
-    businessPercentLabel: "Business-use percent",
-    qualityGood: "Recognized confidently",
-    qualityCheck: "Please verify the recognized data",
-    qualityBad: "Couldn't recognize — fill in manually",
-    openPhoto: "Open full-size photo",
-    nothingFound: "Nothing matches the filter.",
-    menuMore: "More",
-    receiptsWord: "receipts",
   },
 };
-
-// Короткие названия месяцев для графика
-export const MONTHS = {
-  uk: ["Січ", "Лют", "Бер", "Кві", "Тра", "Чер", "Лип", "Сер", "Вер", "Жов", "Лис", "Гру"],
-  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-};
-
-export const USAGE_TYPES = ['work', 'partial', 'personal'];
-
-// Доля расхода, идущая к вычету
-export function deductibleShare(usageType, businessPercent) {
-  if (usageType === 'personal') return 0;
-  if (usageType === 'partial') return Math.max(0, Math.min(100, businessPercent ?? 0)) / 100;
-  return 1; // work
-}
 
 export function dictFor(lang) {
   return STRINGS[lang] || STRINGS.uk;
@@ -256,18 +153,8 @@ export function dictFor(lang) {
 
 // Строки для Excel-выгрузки
 export const EXPORT_STRINGS = {
-  uk: {
-    sheet: "Чеки", n: "№", date: "Дата", category: "Категорія", merchant: "Магазин",
-    amount: "Сума", currency: "Валюта", usage: "Тип витрати", deductible: "До вирахування",
-    note: "Нотатка", photo: "Файл фото", total: "РАЗОМ",
-    usageWork: "Робоча", usagePersonal: "Особиста", usagePartial: "Частково робоча",
-  },
-  en: {
-    sheet: "Receipts", n: "#", date: "Date", category: "Category", merchant: "Merchant",
-    amount: "Amount", currency: "Currency", usage: "Expense type", deductible: "Deductible",
-    note: "Note", photo: "Photo file", total: "TOTAL",
-    usageWork: "Business", usagePersonal: "Personal", usagePartial: "Partly business",
-  },
+  uk: { sheet: "Чеки", n: "№", date: "Дата", category: "Категорія", merchant: "Магазин", amount: "Сума", currency: "Валюта", note: "Нотатка", photo: "Файл фото", total: "РАЗОМ" },
+  en: { sheet: "Receipts", n: "#", date: "Date", category: "Category", merchant: "Merchant", amount: "Amount", currency: "Currency", note: "Note", photo: "Photo file", total: "TOTAL" },
 };
 
 export function exportStringsFor(lang) {

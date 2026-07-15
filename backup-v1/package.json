@@ -1,0 +1,26 @@
+{
+  "name": "receipt-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Учёт чеков для налоговых списаний: фото → распознавание (AI) → база → выгрузка для бухгалтера",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.45.4",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.1",
+    "next": "14.2.15",
+    "openai": "^4.67.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.15"
+  }
+}

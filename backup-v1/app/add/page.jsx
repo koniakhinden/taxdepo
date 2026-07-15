@@ -7,7 +7,6 @@ import { useI18n } from '../i18n-provider';
 import LanguageSwitcher from '../language-switcher';
 import { processImage } from '../../lib/image';
 import { categoriesFor, CURRENCIES, DEFAULT_CURRENCY, OTHER } from '../../lib/i18n';
-import UsageFields from '../usage-fields';
 
 export default function AddReceiptPage() {
   const router = useRouter();
@@ -23,7 +22,6 @@ export default function AddReceiptPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [quality, setQuality] = useState(null); // good | check | bad
   const [form, setForm] = useState({
     purchased_at: '',
     category: OTHER[lang],
@@ -31,8 +29,6 @@ export default function AddReceiptPage() {
     currency: DEFAULT_CURRENCY,
     merchant: '',
     note: '',
-    usage_type: 'work',
-    business_percent: 100,
   });
 
   useEffect(() => {
@@ -44,7 +40,6 @@ export default function AddReceiptPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setError('');
-    setQuality(null);
     setProcessing(true);
     try {
       const { dataUrl, blob: outBlob } = await processImage(file);
@@ -52,9 +47,9 @@ export default function AddReceiptPage() {
       setBlob(outBlob);
       setProcessing(false);
       analyze(dataUrl);
-    } catch {
+    } catch (err) {
       setProcessing(false);
-      setQuality('bad');
+      setError(t('notRecognized'));
     }
   }
 
@@ -71,10 +66,7 @@ export default function AddReceiptPage() {
       if (!res.ok) throw new Error(json.error || 'error');
       const d = json.data || {};
 
-      const conf = typeof d.confidence === 'number' ? d.confidence : (d.amount != null ? 0.8 : 0);
-      if (d.amount == null && !d.date) setQuality('bad');
-      else if (conf >= 0.8) setQuality('good');
-      else setQuality('check');
+      if (d.amount == null && !d.date) setError(t('notRecognized'));
 
       setForm((f) => ({
         ...f,
@@ -84,8 +76,8 @@ export default function AddReceiptPage() {
         merchant: d.merchant || f.merchant,
         category: categories.includes(d.category) ? d.category : f.category,
       }));
-    } catch {
-      setQuality('bad');
+    } catch (err) {
+      setError(t('notRecognized'));
     } finally {
       setAnalyzing(false);
     }
@@ -127,8 +119,6 @@ export default function AddReceiptPage() {
         currency: form.currency || DEFAULT_CURRENCY,
         merchant: form.merchant || null,
         note: form.note || null,
-        usage_type: form.usage_type,
-        business_percent: form.usage_type === 'partial' ? Number(form.business_percent) : (form.usage_type === 'personal' ? 0 : 100),
         image_path: imagePath,
       });
       if (insErr) throw insErr;
@@ -142,8 +132,6 @@ export default function AddReceiptPage() {
   }
 
   const busy = processing || analyzing;
-  const qText = { good: t('qualityGood'), check: t('qualityCheck'), bad: t('qualityBad') };
-  const qIcon = { good: '✓', check: '⚠', bad: '✕' };
 
   return (
     <>
@@ -151,7 +139,7 @@ export default function AddReceiptPage() {
         <div className="brand">{t('newReceipt')}</div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <LanguageSwitcher />
-          <a href="/" className="btn secondary sm">{t('back')}</a>
+          <a href="/" className="btn secondary">{t('back')}</a>
         </div>
       </div>
 
@@ -166,20 +154,29 @@ export default function AddReceiptPage() {
           ) : (
             <>
               <img src={preview} alt="" className="preview" />
-              <button className="btn secondary" style={{ marginTop: 10 }} onClick={() => fileRef.current?.click()} type="button">
+              <button
+                className="btn secondary"
+                style={{ marginTop: 10 }}
+                onClick={() => fileRef.current?.click()}
+                type="button"
+              >
                 {t('replacePhoto')}
               </button>
             </>
           )}
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display: 'none' }} />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={onFile}
+            style={{ display: 'none' }}
+          />
           {busy && (
             <div className="muted" style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
               <span className="spinner" style={{ borderTopColor: 'var(--primary)', borderColor: 'rgba(37,99,235,.3)' }} />
               {processing ? t('processingPhoto') : t('recognizing')}
             </div>
-          )}
-          {!busy && quality && (
-            <div className={`quality ${quality}`}>{qIcon[quality]} {qText[quality]}</div>
           )}
         </div>
 
@@ -195,17 +192,19 @@ export default function AddReceiptPage() {
             <div style={{ maxWidth: 120 }}>
               <label style={{ marginTop: 0 }}>{t('currencyLabel')}</label>
               <select value={form.currency} onChange={(e) => set('currency', e.target.value)}>
-                {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {CURRENCIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
             </div>
           </div>
 
           <label>{t('categoryLabel')}</label>
           <select value={form.category} onChange={(e) => set('category', e.target.value)}>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            {categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
           </select>
-
-          <UsageFields form={form} set={set} />
 
           <label>{t('merchantLabel')}</label>
           <input value={form.merchant} onChange={(e) => set('merchant', e.target.value)} placeholder={t('optional')} />
